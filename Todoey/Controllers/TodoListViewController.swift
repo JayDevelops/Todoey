@@ -10,15 +10,25 @@ import UIKit
 
 class TodoListViewController: UITableViewController {
     
-    var itemListArray = ["Find Yari", "Hug Yari", "Kiss Yari"]
+    //Stores key pair values in the launches of your own app
+    let defaults = UserDefaults.standard
+    
+    var itemListArray = [Item]()
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        let newItem = Item()
+        newItem.title = "Kiss Yari"
+        itemListArray.append(newItem)
+        
+        
+        //To save and call to the specific key id in order to retrieve new inputted to do lists, also wont crash
+        if let items = defaults.array(forKey: "ToDoListArray") as? [Item] {
+            itemListArray = items
+        }
+        
     }
-    
-    
-    
     
     
     //MARK- Table View Datasource Methods
@@ -34,8 +44,13 @@ class TodoListViewController: UITableViewController {
         //set a variable known as a cell to the cell in the story board with identifier
         let cell = tableView.dequeueReusableCell(withIdentifier: "TodoItemCell", for: indexPath)
         
+        let itemRow = itemListArray[indexPath.row]
+        
         //set the text label to the item list array and the current row path
-        cell.textLabel?.text = itemListArray[indexPath.row]
+        cell.textLabel?.text = itemRow.title
+        
+        //checks if the cell indeed has a done then put a checkmark, else a none
+        cell.accessoryType = itemRow.done ? .checkmark : .none
         
         return cell
     }
@@ -49,14 +64,10 @@ class TodoListViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         //print(itemListArray[indexPath.row])
         
-        //Gets the current indexPath and puts a checkmark when the user click on it
+        //Takes the opposite of what it currently is
+        itemListArray[indexPath.row].done = !itemListArray[indexPath.row].done
         
-        if tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark {
-            tableView.cellForRow(at: indexPath)?.accessoryType = .none
-        }   else    {
-            tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
-        }
-        
+        tableView.reloadData()
         
         tableView.deselectRow(at: indexPath, animated: true)
     }
@@ -77,11 +88,15 @@ class TodoListViewController: UITableViewController {
         
         //The button you will press when done writing your to do list item
         let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
-            //What happend once the user clicks on the button
-            print("Sucess, this button was pressed!")
-            print(textField.text!)
             
-            self.itemListArray.append(textField.text!)
+            let newItem = Item()
+            newItem.title = textField.text!
+            
+            //Add the input data to the cell array
+            self.itemListArray.append(newItem)
+            
+            //Add the user input data to the default storage, with the pList, saves the data to the key
+            self.defaults.set(self.itemListArray, forKey: "ToDoListArray")
             
             //Reloads the data for the user inputted data
             self.tableView.reloadData()
